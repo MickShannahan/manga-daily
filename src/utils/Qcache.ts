@@ -1,5 +1,7 @@
 // Simple localStorage cache with expiry
 class QCache {
+  prefix: string
+
   constructor(prefix = "mwapi_") {
     this.prefix = prefix
   }
