@@ -1,7 +1,10 @@
-import { QCache } from '@/utils/QCache.js'
-import { parseWikitextFields, parseMangaDetailsFromPage } from '@/utils/WikiParsers.js'
+import { QCache } from '@/utils/QCache.ts'
+import { parseMangaDetailsFromPage } from '../utils/WikiParser'
 
 class MediaWikiAPI {
+  apiUrl: string
+  cache: QCache
+
   constructor(apiUrl = "https://en.wikipedia.org/w/api.php") {
     this.apiUrl = apiUrl
     this.cache = new QCache()
@@ -67,12 +70,12 @@ class MediaWikiAPI {
     return details
   }
 
-  async getMangaDetailsBatch(titles) {
+  async getMangaDetailsBatch(titles: string[]) {
     const BATCH_SIZE = 50
-    let allDetails = []
-    const toFetch = []
+    let allDetails: object[] = []
+    const toFetch: string[] = []
     titles.forEach((title) => {
-      const cached = this.getCachedDetails(title)
+      const cached : object = this.getCachedDetails(title)
       if (cached) allDetails.push(cached)
       else toFetch.push(title)
     })
@@ -84,7 +87,7 @@ class MediaWikiAPI {
       const batchNum = Math.floor(i / BATCH_SIZE) + 1
       console.log('🍰', batchNum, i)
       const batch = toFetch.slice(i, i + BATCH_SIZE)
-      const fetchedDetails = []
+      const fetchedDetails: object[] = []
       // get what isn't cached
       const params = new URLSearchParams({
         action: "query",
@@ -120,9 +123,9 @@ class MediaWikiAPI {
     return details
   }
 
-  // Filter out manga with missing required fields
-  filterValidManga(detailsArray) {
-  }
+  // // Filter out manga with missing required fields
+  // filterValidManga(detailsArray) {
+  // }
 }
 
 
