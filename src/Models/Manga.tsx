@@ -6,6 +6,7 @@ import { DataContract } from './DataContract'
 
 export class Manga extends DataContract {
   title: string
+  japanTitle: string
   author: string
   image: string
   genre: string[]
@@ -21,6 +22,7 @@ export class Manga extends DataContract {
   constructor(data: any = {}){
     super()
     this.title = data.title ?? ''
+    this.japanTitle = data.japanTitle ?? ''
     this.author = data.author ?? ''
     this.genre = Array.isArray(data.genre) ? data.genre : typeof data.genre == 'string' ? data.genre.split(', ') : ['']
     this.image = data.image ?? ''

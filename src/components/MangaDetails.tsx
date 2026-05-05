@@ -1,52 +1,60 @@
 import { observer } from "mobx-react-lite";
 import { Manga } from "../Models/Manga";
 import CharacterCard from "./CharacterCard";
+import SpoilerText from "./SpoilerText";
+import SpoilerImage from "./SpoilerImage";
+import SpoilerPill from "./SpoilerPill";
 
 const MangaDetails = observer(({ manga }: { manga: Manga }) => {
   return (
-    <section className="max-w-4xl mx-auto p-6">
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl overflow-hidden">
+    <section className=" mx-auto p-6">
+      <div className=" ">
 
         {/* Hero — image + title block */}
         <div className="flex flex-col sm:flex-row gap-6 p-6">
-          <img
+          <SpoilerImage
             src={manga?.image}
             alt={manga?.title}
-            className="w-48 h-64 object-cover rounded-xl shadow-md self-start shrink-0"
+            className="w-64 h-96 rounded-xl shadow-md self-start"
+            isGiveUp
           />
           <div className="flex flex-col justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                {manga?.title}
+                <SpoilerText text={manga?.title} isGiveUp />
               </h1>
+              <h2 className="font-jp">
+                <SpoilerText text={manga?.japanTitle} isGiveUp />
+              </h2>
+              {/* Genre pills */}
+              <div className="flex flex-wrap gap-2 my-3">
+                {manga?.genre?.map((g, index) => (
+                  <SpoilerPill
+                    key={index}
+                    label={g}
+                    penalty={50}
+                    className="bg-pink-100 dark:bg-red-900 text-red-700 dark:text-red-300"
+                  />
+                ))}
+              </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                {manga?.articleIntro}
+                <SpoilerText text={manga?.articleIntro} block />
               </p>
             </div>
 
             {/* Meta badges */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 mt-3">
               {[
-                { label: 'Author', value: manga?.author },
-                { label: 'Published', value: manga?.published },
-                { label: 'Volumes', value: manga?.volumes },
-              ].map(({ label, value }) => (
+                { label: 'Author', value: manga?.author, penalty: 200 },
+                { label: 'Published', value: manga?.published, penalty: 100 },
+                { label: 'Volumes', value: manga?.volumes, penalty: 25 },
+              ].map(({ label, value, penalty }) => (
                 <div key={label} className="bg-gray-100 dark:bg-gray-800 rounded-lg px-3 py-2">
                   <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">{label}</p>
-                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{value}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-100">
+                    <SpoilerText text={value} penalty={penalty} />
+                  </p>
                 </div>
-              ))}
-            </div>
-
-            {/* Genre pills */}
-            <div className="flex flex-wrap gap-2 mt-3">
-              {manga?.genre?.map((g, index) => (
-                <span
-                  key={index}
-                  className="bg-pink-100 dark:bg-pink-900 text-pink-700 dark:text-pink-300 text-xs font-semibold px-3 py-1 rounded-full"
-                >
-                  {g}
-                </span>
               ))}
             </div>
           </div>
@@ -57,7 +65,9 @@ const MangaDetails = observer(({ manga }: { manga: Manga }) => {
         {/* Plot */}
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Plot</h2>
-          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{manga?.plot}</p>
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+            <SpoilerText text={manga?.plot} penalty={550} block />
+          </p>
         </div>
 
         <div className="border-t border-gray-200 dark:border-gray-700 mx-6" />
@@ -65,9 +75,9 @@ const MangaDetails = observer(({ manga }: { manga: Manga }) => {
         {/* Characters */}
         <div className="p-6">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Main Characters</h2>
-          <div className="flex flex-wrap gap-2 justify-content-between">
-            {manga?.mainCharacters?.map((character) => (
-              <CharacterCard character={character}/>
+          <div className="flex flex-wrap gap-2 justify-between">
+            {manga?.mainCharacters?.map((character, index) => (
+              <CharacterCard key={index} character={character} penalty={Math.max(0, 650 - index * 50)} />
             ))}
           </div>
         </div>
@@ -90,3 +100,4 @@ const MangaDetails = observer(({ manga }: { manga: Manga }) => {
 });
 
 export default MangaDetails;
+
