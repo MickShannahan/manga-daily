@@ -1,5 +1,6 @@
 import { QCache } from '@/utils/QCache.ts'
 import { parseMangaDetailsFromPage } from '../utils/WikiParser'
+import { logger } from '../utils/Logger'
 
 class MediaWikiAPI {
   apiUrl: string
@@ -61,10 +62,11 @@ class MediaWikiAPI {
     const response = await fetch(url)
     const data = await response.json()
     const pages = data.query.pages
-    let details = null
+    logger.log('🦧', data)
+    let details: any = null
     for (const pageId in pages) {
       details = parseMangaDetailsFromPage(pages[pageId])
-      this.cache.set(cacheKey, details)
+      // this.cache.set(cacheKey, details)
       break
     }
     return details

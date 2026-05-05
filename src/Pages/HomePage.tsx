@@ -1,11 +1,13 @@
 import { observer } from "mobx-react-lite"
 import { AppState } from "../AppState"
-import { mangaWikiService } from "../services/MediaWikiApi"
 import { logger } from "../utils/Logger"
 import { mangaList } from "../utils/mangalist"
 import { useEffect, useState } from "react"
 import { observable } from "mobx"
 import MangaDetails from "../components/MangaDetails"
+import { wikiService } from "../services/WikiService"
+import { Manga } from "../Models/Manga"
+import { Character } from "../Models/Character"
 
 const HomePage = observer(__ => {
 
@@ -15,10 +17,17 @@ const HomePage = observer(__ => {
   }, [/**on mount */])
 
   async function test(){
-    const title = mangaList[0]
-    const manga = await mangaWikiService.getMangaDetails(title)
-    logger.log('📕',manga)
-    AppState.activeManga = manga
+    const title = mangaList[1]
+    const mangaData = await wikiService.getArticle(title, Manga.toContract())
+    logger.log('📕', mangaData)
+
+    const characterLinks: string[] = (mangaData.mainCharacters ?? []).slice(0, 5).map(char => char.articleLink.slice(char.articleLink.lastIndexOf('/')))
+    const characterData = await Promise.all(
+      characterLinks.map(char => wikiService.getArticle(char, Character.toContract()))
+    )
+    mangaData.mainCharacters = characterData.map(c => new Character(c))
+
+    AppState.activeManga = new Manga(mangaData)
   }
 
   return (
