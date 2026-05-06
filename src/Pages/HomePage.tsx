@@ -14,17 +14,27 @@ const HomePage = observer(__ => {
 
 
   useEffect(()=>{
-    test()
+    getDailyManga()
   }, [/**on mount */])
 
-  async function test(){
-    const title = mangaList[3]
+  async function getDailyManga(){
+    const title = mangaList[102]
     const mangaData = await wikiService.getArticle(title, Manga.toContract())
-    logger.log('📕', mangaData)
+    const anonymousPlot = await wikiService.anonymizeTextBody(mangaData.plot)
+    const anonymousDetails = await wikiService.anonymizeTextBody(mangaData.articleIntro)
+    mangaData.articleIntro = anonymousDetails.text
+    mangaData.plot = anonymousPlot.text
+    // logger.log('📕', mangaData)
 
-    const characterLinks: string[] = (mangaData.mainCharacters ?? []).slice(0, 5).map(char => char.articleLink?.slice(char.articleLink.lastIndexOf('/'))).filter(l => l)
+    const originalCharacters = (mangaData.mainCharacters ?? []).slice(0, 5)
+    const characterLinks: string[] = originalCharacters.map(char => char.articleLink?.slice(char.articleLink.lastIndexOf('/')+1)).filter(l => l)
     const characterData = await Promise.all(
-      characterLinks.map(char => wikiService.getArticle(char, Character.toContract()))
+      characterLinks.map((char, i) =>
+        wikiService.getArticle(char, Character.toContract()).catch(err => {
+          logger.log('⚠️ Failed to fetch character:', char, err)
+          return originalCharacters[i]
+        })
+      )
     )
     mangaData.mainCharacters = characterData.map(c => new Character(c))
 
@@ -32,13 +42,14 @@ const HomePage = observer(__ => {
   }
 
   return (
-    <section className="@container">
-      <div className="mx-auto px-2 @lg:px-5 @md:max-w-6xl pr-72">
+    <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] min-h-screen">
+      <div className="min-w-0 mx-auto w-full px-2 lg:px-5 max-w-[100ch]">
         <MangaDetails manga={AppState.activeManga}/>
-        <button onClick={test} className="bg-sky-500 hover:bg-sky-700">Test API</button>
       </div>
-      <GuessSidebar />
-    </section>
+      <div>
+        <GuessSidebar />
+      </div>
+    </div>
   )
 })
 

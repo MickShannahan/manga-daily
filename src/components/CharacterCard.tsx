@@ -2,34 +2,17 @@ import { useState } from 'react'
 import { observer } from "mobx-react-lite";
 import type { Character } from "../Models/Character";
 import { AppState } from '../AppState';
+import { renderSegments } from '../utils/renderSegments';
 
 const PLACEHOLDER = 'https://placehold.co/300x400?text=No+Image'
 
-function scrambleWithGuesses(text: string, guesses: string[]) {
-  if (!text) return null
-  if (!guesses.length) return <span className="tracking-tighter">{text.replace(/[^\s]/g, '█')}</span>
-  const escaped = guesses.map(g => g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  const pattern = new RegExp(`(${escaped.join('|')})`, 'gi')
-  const parts = text.split(pattern)
-  return (
-    <>
-      {parts.map((part, i) => {
-        const isMatch = guesses.some(g => part.toLowerCase() === g.toLowerCase())
-        return isMatch
-          ? <span key={i}>{part}</span>
-          : <span key={i} className="tracking-tighter">{part.replace(/[^\s]/g, '█')}</span>
-      })}
-    </>
-  )
-}
-
-const CharacterCard = observer(({character, penalty = 0}: {character: Character, penalty?: number})=>{
+const CharacterCard = observer(({character, penalty = 0, label}: {character: Character, penalty?: number, label?: string})=>{
   const [revealed, setRevealed] = useState(false)
   const isRevealed = revealed || AppState.revealAll
 
   function handleClick() {
     if (isRevealed) return
-    AppState.deductPoints(penalty)
+    AppState.deductPoints(penalty, label)
     setRevealed(true)
   }
 
@@ -56,11 +39,11 @@ const CharacterCard = observer(({character, penalty = 0}: {character: Character,
       </div>
       <div className="p-3">
         <p className="text-white font-semibold text-sm truncate">
-          {isRevealed ? character.name : scrambleWithGuesses(character.name, AppState.guesses)}
+          {isRevealed ? character.name : renderSegments(character.name, AppState.guesses)}
         </p>
         {character.altName && (
           <p className="text-gray-400 text-xs truncate mt-0.5">
-            {isRevealed ? character.altName : scrambleWithGuesses(character.altName, AppState.guesses)}
+            {isRevealed ? character.altName : renderSegments(character.altName, AppState.guesses)}
           </p>
         )}
       </div>

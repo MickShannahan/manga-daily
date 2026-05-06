@@ -19,7 +19,7 @@ const GuessSidebar = observer(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
-  }, [AppState.guesses.length])
+  })
 
   const scoreColor = AppState.score > 1000
     ? 'text-green-400'
@@ -30,7 +30,7 @@ const GuessSidebar = observer(() => {
   const displayScore = useRollingNumber(AppState.score)
 
   return (
-    <aside className="fixed bottom-0 right-0 h-[calc(100vh-4rem)] bg-black w-72 flex flex-col overflow-hidden z-50">
+    <aside className="bg-black w-full flex flex-col overflow-hidden z-40 h-96 lg:h-[calc(100vh-4rem)] lg:sticky lg:top-16">
 
       {/* Score */}
       <div className="px-4 pt-4 pb-3 border-b border-gray-700">
@@ -45,29 +45,31 @@ const GuessSidebar = observer(() => {
         )}
       </div>
 
-      <div className="px-4 pt-3 pb-2 border-b border-gray-700">
-        <h2 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">Guesses</h2>
-      </div>
 
-      {/* Scrollable guess list */}
+      {/* Scrollable event list */}
       <div ref={listRef} className="flex-1 overflow-y-auto px-3 py-2 space-y-1 min-h-0">
-        {AppState.guesses.length === 0 && (
-          <p className="text-gray-600 text-xs italic">No guesses yet</p>
+        {AppState.events.length === 0 && (
+          <p className="text-gray-600 text-xs italic">No activity yet</p>
         )}
-        {AppState.guesses.map((guess, i) => {
-          const isCorrect = guess.toLowerCase() === AppState.activeManga?.title?.toLowerCase()
+        {AppState.events.map((event, i) => {
+          if (event.type === 'guess') {
+            return (
+              <div key={i} className={`flex items-center gap-2 rounded-lg px-3 py-1.5 ${event.correct ? 'bg-green-900/40' : 'bg-gray-900'}`}>
+                <span className={`text-[10px] font-bold uppercase shrink-0 pe-1.5 mt-1  rounded ${event.correct ? 'bg-green-700 text-green-100' : ' text-indigo-400'}`}>
+                  Guess
+                </span>
+                <span className={`text-sm truncate ${event.correct ? 'text-green-300' : 'text-gray-300'}`}>{event.text}</span>
+                {event.correct && <span className="text-green-400 text-xs ml-auto shrink-0">✓</span>}
+              </div>
+            )
+          }
           return (
-            <div key={i} className={`flex items-center justify-between rounded-lg px-3 py-1.5 ${isCorrect ? 'bg-green-900/40' : 'bg-gray-800'}`}>
-              <span className={`text-sm truncate ${isCorrect ? 'text-green-300' : 'text-gray-300'}`}>{guess}</span>
-              {!AppState.gameOver && (
-                <button
-                  onClick={() => AppState.guesses.splice(i, 1)}
-                  className="text-gray-600 hover:text-red-400 ml-2 text-xs shrink-0"
-                  title="Remove guess"
-                >
-                  ✕
-                </button>
-              )}
+            <div key={i} className="flex items-center gap-2 rounded-lg px-3 py-1.5 bg-gray-900">
+              <span className="text-[10px] font-bold uppercase shrink-0 pe-1.5 mt-1 rounded  text-amber-300">
+                Reveal
+              </span>
+              <span className="text-sm truncate text-gray-300">{event.label}</span>
+              <span className="text-red-400 text-xs ml-auto shrink-0 tabular-nums">-{event.cost}</span>
             </div>
           )
         })}
@@ -90,11 +92,6 @@ const GuessSidebar = observer(() => {
               placeholder="Type a guess + Enter"
               className="w-full bg-gray-800 text-white text-sm rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-600"
             />
-            {input.trim() && (
-              <p className="text-gray-500 text-xs mt-1 text-right">
-                -{10 + input.trim().length} pts
-              </p>
-            )}
           </>
         )}
       </div>

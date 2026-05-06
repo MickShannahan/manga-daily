@@ -101,7 +101,6 @@ export const mangaList = [
     "A_Certain_Magical_Index",
     "Hell_Teacher:_Jigoku_Sensei_N%C5%ABbe",
     "Kuroko%27s_Basketball",
-    "Bastard!!_(manga)",
     "Chameleon_(manga)",
     "Death_Note",
     "Dr._Slump",

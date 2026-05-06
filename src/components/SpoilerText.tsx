@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { observer } from 'mobx-react-lite'
 import { AppState } from '../AppState'
+import { renderSegments } from '../utils/renderSegments'
 
 interface Props {
   text: string
@@ -8,29 +9,10 @@ interface Props {
   penalty?: number
   isGiveUp?: boolean
   block?: boolean
+  label?: string
 }
 
-function renderSegments(text: string, guesses: string[]) {
-  if (!text) return null
-  if (!guesses.length) return <span className="tracking-tighter">{text.replace(/[^\s]/g, '█')}</span>
-
-  const escaped = guesses.map(g => g.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-  const pattern = new RegExp(`(${escaped.join('|')})`, 'gi')
-  const parts = text.split(pattern)
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        const isMatch = guesses.some(g => part.toLowerCase() === g.toLowerCase())
-        return isMatch
-          ? <span key={i}>{part}</span>
-          : <span key={i} className="tracking-tighter">{part.replace(/[^\s]/g, '█')}</span>
-      })}
-    </>
-  )
-}
-
-const SpoilerText = observer(({ text, className = '', penalty = 0, isGiveUp = false, block = false }: Props) => {
+const SpoilerText = observer(({ text, className = '', penalty = 0, isGiveUp = false, block = false, label: revealLabel }: Props) => {
   const [revealed, setRevealed] = useState(false)
   const isRevealed = revealed || AppState.revealAll
 
@@ -39,7 +21,7 @@ const SpoilerText = observer(({ text, className = '', penalty = 0, isGiveUp = fa
     if (isGiveUp) {
       AppState.giveUp()
     } else {
-      AppState.deductPoints(penalty)
+      AppState.deductPoints(penalty, revealLabel)
     }
     setRevealed(true)
   }
