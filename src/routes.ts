@@ -5,5 +5,6 @@ import {
 
 export default [
   route("/", "./Pages/HomePage.tsx"),
+  route("/play/:date", "./Pages/HomePage.tsx"),
   route("/scores", "./Pages/ScoreCardPage.tsx"),
 ] satisfies RouteConfig;

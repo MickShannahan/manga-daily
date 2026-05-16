@@ -1,11 +1,13 @@
 import { observer } from "mobx-react-lite"
 import { AppState } from "../AppState"
 import DailyScoreCard from "../components/DailyScoreCard"
+import UnplayedDayCard from "../components/UnplayedDayCard"
 
 const ScoreCardPage = observer(() => {
-  const totalPlayed = AppState.dailyScores.length
+  const completedDays = AppState.allDays.filter(d => d.score !== undefined)
+  const totalPlayed = completedDays.length
   const avgScore = totalPlayed > 0
-    ? Math.round(AppState.dailyScores.reduce((sum, s) => sum + s.score, 0) / totalPlayed)
+    ? Math.round(completedDays.reduce((sum, d) => sum + (d.score?.score ?? 0), 0) / totalPlayed)
     : 0
 
   return (
@@ -41,19 +43,13 @@ const ScoreCardPage = observer(() => {
         )}
 
         {/* Score cards */}
-        {AppState.dailyScores.length === 0 ? (
-          <div className="text-center py-24 text-zinc-400 dark:text-zinc-600">
-            <div className="text-6xl mb-4 select-none">📚</div>
-            <p className="text-lg font-semibold">No scores yet</p>
-            <p className="text-sm mt-1">Play the daily challenge to see your history here!</p>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            {AppState.dailyScores.map((dailyScore, index) => (
-              <DailyScoreCard key={index} score={dailyScore} />
-            ))}
-          </div>
-        )}
+        <div className="flex flex-col gap-4">
+          {AppState.allDays.map(day =>
+            day.score
+              ? <DailyScoreCard key={day.dateKey} score={day.score} />
+              : <UnplayedDayCard key={day.dateKey} dateKey={day.dateKey} />
+          )}
+        </div>
 
       </div>
     </div>
