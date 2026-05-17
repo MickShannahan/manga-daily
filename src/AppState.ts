@@ -2,26 +2,38 @@ import { makeAutoObservable } from "mobx";
 import { normalizeGuess } from "./utils/normalize";
 import { DailyScore } from "./Models/DailyScore";
 import { getDaysFromLaunch } from "./utils/dateUtils";
+import { ScoreMangaSummary } from "./Models/ScoreMangaSummary";
 
 export type GameEvent =
   | { type: 'guess'; text: string; correct: boolean }
   | { type: 'reveal'; label: string; cost: number }
 
-const SCORE_KEY_PREFIX = 'manga-daily:score:'
+const SCORES_KEY = 'manga-daily:scores'
+
+type StoredScoresMap = Record<string, {
+  title: string
+  japanTitle: string
+  image: string
+  score: number
+  gaveUp: boolean
+  guesses: string[]
+}>
 
 function loadScoresFromStorage(): DailyScore[] {
-  const scores: DailyScore[] = []
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i)
-    if (!key?.startsWith(SCORE_KEY_PREFIX)) continue
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) scores.push(new DailyScore(JSON.parse(raw)))
-    } catch {
-      // ignore corrupt entries
-    }
+  try {
+    const raw = localStorage.getItem(SCORES_KEY)
+    if (!raw) return []
+    const map: StoredScoresMap = JSON.parse(raw)
+    return Object.entries(map)
+      .map(([date, data]) => new DailyScore({
+        date,
+        ...data,
+        manga: new ScoreMangaSummary({ title: data.title, japanTitle: data.japanTitle, image: data.image }),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date))
+  } catch {
+    return []
   }
-  return scores.sort((a, b) => b.date.localeCompare(a.date))
 }
 
 export const AppState = makeAutoObservable({
@@ -31,6 +43,8 @@ export const AppState = makeAutoObservable({
   score: 1500,
   gameOver: false,
   revealAll: false,
+  playerGaveUp: false,
+  isLiveSession: false,
   dailyScores: loadScoresFromStorage() as DailyScore[],
 
   get completedDateKeys(): Set<string> {
@@ -46,7 +60,19 @@ export const AppState = makeAutoObservable({
   },
 
   saveScore(score: DailyScore) {
-    localStorage.setItem(`${SCORE_KEY_PREFIX}${score.date}`, JSON.stringify(score))
+    try {
+      const raw = localStorage.getItem(SCORES_KEY)
+      const map: StoredScoresMap = raw ? JSON.parse(raw) : {}
+      map[score.date] = {
+        title: score.manga.title,
+        japanTitle: score.manga.japanTitle,
+        image: score.manga.image,
+        score: score.score,
+        gaveUp: score.gaveUp,
+        guesses: score.guesses,
+      }
+      localStorage.setItem(SCORES_KEY, JSON.stringify(map))
+    } catch { /* ignore */ }
     const existing = this.dailyScores.findIndex((s: DailyScore) => s.date === score.date)
     if (existing >= 0) {
       this.dailyScores[existing] = score
@@ -62,7 +88,24 @@ export const AppState = makeAutoObservable({
     this.score = 1500
     this.gameOver = false
     this.revealAll = false
+    this.playerGaveUp = false
+    this.isLiveSession = true
     this.activeManga = {}
+  },
+
+  restoreFromScore(saved: DailyScore) {
+    this.guesses = [...saved.guesses]
+    this.events = saved.guesses.map((g, i) => {
+      const isLast = i === saved.guesses.length - 1
+      const wonOnThis = isLast && saved.score > 0 && !saved.gaveUp
+      return { type: 'guess' as const, text: g, correct: wonOnThis }
+    })
+    this.score = saved.score
+    this.playerGaveUp = saved.gaveUp
+    this.isLiveSession = false
+    this.gameOver = true
+    this.revealAll = true
+    // activeManga intentionally not cleared — keep showing current manga while new fetch runs
   },
 
   deductPoints(amount: number, label?: string) {
@@ -79,6 +122,7 @@ export const AppState = makeAutoObservable({
     if (this.gameOver) return
     this.events.push({ type: 'reveal', label: 'Answer', cost: this.score })
     this.score = 0
+    this.playerGaveUp = true
     this.revealAll = true
     this.gameOver = true
   },

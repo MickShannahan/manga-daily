@@ -12,7 +12,7 @@ const ScoreCardPage = observer(() => {
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <div className="max-w-2xl mx-auto px-4 py-10">
+      <div className="max-w-5xl mx-auto px-4 py-10">
 
         {/* Page header */}
         <div className="mb-8">
@@ -43,7 +43,7 @@ const ScoreCardPage = observer(() => {
         )}
 
         {/* Score cards */}
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
           {AppState.allDays.map(day =>
             day.score
               ? <DailyScoreCard key={day.dateKey} score={day.score} />

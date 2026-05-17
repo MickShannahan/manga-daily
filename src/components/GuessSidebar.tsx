@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite'
 import { useState, useRef, useEffect } from 'react'
+import { Link } from 'react-router'
 import { AppState } from '../AppState'
 import { useRollingNumber } from '../utils/useRollingNumber'
 
@@ -40,7 +41,7 @@ const GuessSidebar = observer(() => {
         </p>
         {AppState.gameOver && (
           <p className="text-xs mt-1 font-semibold text-indigo-400">
-            {AppState.score === 0 && AppState.revealAll ? '💀 Gave up' : '🎉 Correct! Score locked in.'}
+            {AppState.playerGaveUp ? '💀 Gave up' : AppState.score === 0 ? '💀 Out of points' : '🎉 Correct! Score locked in.'}
           </p>
         )}
       </div>
@@ -78,7 +79,12 @@ const GuessSidebar = observer(() => {
       {/* Input pinned to bottom */}
       <div className="px-3 pb-3 pt-2 border-t border-gray-700">
         {AppState.gameOver ? (
-          <p className="text-gray-600 text-xs italic text-center py-1">Game over</p>
+          <Link
+            to="/scores"
+            className="block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold rounded-lg px-3 py-2 transition-colors"
+          >
+            See Previous Days
+          </Link>
         ) : (
           <>
             <p className="text-gray-600 text-xs mb-1.5">

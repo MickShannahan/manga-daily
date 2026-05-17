@@ -14,6 +14,11 @@ type Pages = {
   "/": {
     params: {};
   };
+  "/play/:date": {
+    params: {
+      "date": string;
+    };
+  };
   "/scores": {
     params: {};
   };
@@ -22,11 +27,14 @@ type Pages = {
 type RouteFiles = {
   "root.tsx": {
     id: "root";
-    page: "/" | "/scores";
+    page: "/" | "/play/:date" | "/scores";
   };
   "./Pages/HomePage.tsx": {
-    id: "Pages/HomePage";
+    id: "home";
     page: "/";
+  } | {
+    id: "play";
+    page: "/play/:date";
   };
   "./Pages/ScoreCardPage.tsx": {
     id: "Pages/ScoreCardPage";
@@ -36,6 +44,7 @@ type RouteFiles = {
 
 type RouteModules = {
   "root": typeof import("./src/root.tsx");
-  "Pages/HomePage": typeof import("./src/./Pages/HomePage.tsx");
+  "home": typeof import("./src/./Pages/HomePage.tsx");
+  "play": typeof import("./src/./Pages/HomePage.tsx");
   "Pages/ScoreCardPage": typeof import("./src/./Pages/ScoreCardPage.tsx");
 };

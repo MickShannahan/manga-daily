@@ -4,6 +4,7 @@ import { ScoreMangaSummary } from "./ScoreMangaSummary"
 export class DailyScore extends DataContract {
   date: string
   score: number
+  gaveUp: boolean
   guesses: string[]
   manga: ScoreMangaSummary
 
@@ -11,6 +12,7 @@ export class DailyScore extends DataContract {
     super()
     this.date = data.date ?? ''
     this.score = data.score ?? 0
+    this.gaveUp = data.gaveUp ?? false
     this.guesses = Array.isArray(data.guesses) ? data.guesses : []
     this.manga = data.manga instanceof ScoreMangaSummary
       ? data.manga
