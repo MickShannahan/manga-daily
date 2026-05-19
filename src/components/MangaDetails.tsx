@@ -14,11 +14,13 @@ const MangaDetails = observer(({ manga }: { manga: Manga }) => {
   const [loadState, setLoadState] = useState<LoadState>('loading')
 
   useEffect(() => {
-    if (manga?.title && loadState === 'loading') {
-      setLoadState('fading-out')
-      const id = setTimeout(() => setLoadState('loaded'), 500)
-      return () => clearTimeout(id)
+    if (!manga?.title) {
+      setLoadState('loading')
+      return
     }
+    setLoadState('fading-out')
+    const id = setTimeout(() => setLoadState('loaded'), 500)
+    return () => clearTimeout(id)
   }, [manga?.title])
 
   if (loadState !== 'loaded') {

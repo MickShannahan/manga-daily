@@ -94,6 +94,7 @@ export const AppState = makeAutoObservable({
   },
 
   restoreFromScore(saved: DailyScore) {
+    this.activeManga = {}
     this.guesses = [...saved.guesses]
     this.events = saved.guesses.map((g, i) => {
       const isLast = i === saved.guesses.length - 1

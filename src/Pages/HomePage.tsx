@@ -12,29 +12,53 @@ import { formatDateKey, getMangaForDay, parseDateKey } from "../utils/dateUtils"
 import { DailyScore } from "../Models/DailyScore"
 import { ScoreMangaSummary } from "../Models/ScoreMangaSummary"
 
+let activeLoadTitle = ''
+
 async function loadMangaForDate(date: Date) {
   const title = getMangaForDay(date)
-  const mangaData = await wikiService.getArticle(title, Manga.toContract())
-  const anonymousPlot = await wikiService.anonymizeTextBody(mangaData.plot)
-  const anonymousDetails = await wikiService.anonymizeTextBody(mangaData.articleIntro)
-  mangaData.articleIntro = anonymousDetails.text
-  mangaData.plot = anonymousPlot.text
-  // logger.log('📕', mangaData)
+  activeLoadTitle = title
 
+  // GET — already anonymized and cached, use it and stop
+  const cached = await wikiService.getCachedArticle(title)
+  if (activeLoadTitle !== title) return
+  if (cached) {
+    AppState.activeManga = new Manga(cached)
+    return
+  }
+
+  // Not cached: fetch raw article from Wiki
+  const mangaData = await wikiService.getArticle(title, Manga.toContract())
+  if (activeLoadTitle !== title) return
+
+  // Anonymize plot and intro
+  const [anonymousPlot, anonymousIntro] = await Promise.all([
+    wikiService.anonymizeTextBody(mangaData.plot),
+    wikiService.anonymizeTextBody(mangaData.articleIntro),
+  ])
+  if (activeLoadTitle !== title) return
+  mangaData.plot = anonymousPlot.text
+  mangaData.articleIntro = anonymousIntro.text
+
+  // Fetch characters
   const originalCharacters = (mangaData.mainCharacters ?? []).slice(0, 5)
   const characterLinks: string[] = originalCharacters
-    .map(char => char.articleLink?.slice(char.articleLink.lastIndexOf('/') + 1))
-    .filter(l => l)
+    .map((char: Character) => char.articleLink?.slice(char.articleLink.lastIndexOf('/') + 1))
+    .filter(Boolean)
   const characterData = await Promise.all(
-    characterLinks.map((char, i) =>
-      wikiService.getArticle(char, Character.toContract()).catch(err => {
+    characterLinks.map((char: string, i: number) =>
+      wikiService.getArticle(char, Character.toContract()).catch((err: unknown) => {
         logger.log('⚠️ Failed to fetch character:', char, err)
         return originalCharacters[i]
       })
     )
   )
-  mangaData.mainCharacters = characterData.map(c => new Character(c))
+  if (activeLoadTitle !== title) return
+  mangaData.mainCharacters = characterData.map((c: Record<string, unknown>) => new Character(c))
+
   AppState.activeManga = new Manga(mangaData)
+
+  // Save anonymized data to DB so next load is a cache hit
+  wikiService.cacheArticle(mangaData.title || title, title, mangaData)
 }
 
 const HomePage = observer(() => {
